@@ -5,7 +5,7 @@ gcc -o control2 control2.c
 
 gcc -o game game.c -lpthread -lm -lwiringPi
 
-gcc -o display display.c -lpthread -lwiringPi
+gcc -o display display.c -lwiringPi
 
 ## 실행
 
