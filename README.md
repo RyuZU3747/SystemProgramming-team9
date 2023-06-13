@@ -1,7 +1,7 @@
 ## 컴파일
 gcc -o control1 control1.c -lpthread
 
-gcc -o control2 control2.c -lpthread
+gcc -o control2 control2.c
 
 gcc -o game game.c -lpthread -lm -lwiringPi
 
