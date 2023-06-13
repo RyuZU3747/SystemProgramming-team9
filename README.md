@@ -16,3 +16,7 @@ gcc -o display display.c -lpthread -lwiringPi
 3. ./control2 <서버IP> <포트>로 컨트롤러 연결 (기본 포트 8081)
 
 4. ./display <서버IP> <포트>로 컨트롤러 연결 (기본 포트 8082)
+
+## 데모 비디오
+
+![demo](./DemoVideo_TEAM9.mp4)
