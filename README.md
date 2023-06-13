@@ -11,12 +11,12 @@ gcc -o display display.c -lpthread -lwiringPi
 
 1. ./game으로 메인 서버 실행
 
-2. ./control1 <서버IP> <포트>로 컨트롤러 연결 (기본 포트 8080)
+2. ./control1 <서버IP> <포트> - 컨트롤러1 연결 (기본 포트 8080)
 
-3. ./control2 <서버IP> <포트>로 컨트롤러 연결 (기본 포트 8081)
+3. ./control2 <서버IP> <포트> - 컨트롤러2 연결 (기본 포트 8081)
 
-4. ./display <서버IP> <포트>로 컨트롤러 연결 (기본 포트 8082)
+4. ./display <서버IP> <포트> - 디스플레이 연결 (기본 포트 8082)
 
 ## 데모 비디오
 
-![demo](./DemoVideo_TEAM9.mp4)
+![](./DemoVideo_TEAM9.mp4)
