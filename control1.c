@@ -26,7 +26,7 @@ double distance = 0;
 int sock;
 struct sockaddr_in serv_addr;
 int inputsize = 1;
-char sendinfo[5] = {'0','0','0','0','\0'};
+char sendinfo[5] = {'0','0','0','0','\0'};//각각 위, 아래, 터치, 초음파
 
 static int GPIOExport(int pin) {
 #define BUFFER_MAX 3
@@ -133,7 +133,7 @@ static int GPIORead(int pin) {
     return atoi(value_str);
 }
 
-void *cho_umpa(){
+void *cho_umpa(){ //초음파 스레드용 포인터함수
     clock_t start_t, end_t;
     double time;
     if(GPIOExport(CHOOUT)==-1 || GPIOExport(CHOIN)==-1){
@@ -147,7 +147,7 @@ void *cho_umpa(){
     }
     GPIOWrite(CHOOUT,0);
     usleep(10000);
-    double beforedistance = 0;
+    double beforedistance = 0; //이전 인식된 거리
     while(1){
         if(GPIOWrite(CHOOUT,1)==-1){
             printf("gpio write/trigger err\n");
@@ -159,21 +159,22 @@ void *cho_umpa(){
         while(GPIORead(CHOIN)==1) end_t = clock();
         time = (double)(end_t-start_t)/CLOCKS_PER_SEC;
         distance = time/2*34000;
-        if(distance > 100) distance = 100;
-        double distance_delta = distance - beforedistance;
+        if(distance > 100) distance = 100; //100cm이상은 고정
+        double distance_delta = distance - beforedistance; // 이전 거리와의 차이로 컨트롤러의 움직임을 감지
         
-		printf("cur : %.2fcm before : %2.fcm delta : %.2fcm\n",distance,beforedistance,distance_delta);
+        /*센서 확인용 출력*/
+		//printf("cur : %.2fcm before : %2.fcm delta : %.2fcm\n",distance,beforedistance,distance_delta);
         
-        beforedistance = distance;
-        if(distance_delta > 5){ 
-            sendinfo[3] = '1';
+        beforedistance = distance; //이전 거리 저장
+        if(abs(distance_delta) > 5){ //만약 컨트롤러가 움직인 거리가 5cm 이상이면 (절댓값은 있어도 되고 없어도 된다)
+            sendinfo[3] = '1'; //초음파에 해당되는 부분을 켜준다
         }
         else sendinfo[3] = '0';
 		usleep(500000);
     }
 }
 
-void *buttonfunc(){
+void *buttonfunc(){ //위아래 버튼용 포인터함수
     if(GPIOExport(UPBUT)==-1 || GPIOExport(DOWNBUT)==-1){
         printf("gpio export err\n");
         exit(0);
@@ -196,7 +197,8 @@ void *buttonfunc(){
         else sendinfo[1] = '0';
     }
 }
-void *touchfunc(){
+
+void *touchfunc(){ //터치 센서용 포인터함수
     if(GPIOExport(TOUCHBUT)==-1){
         printf("gpio export err\n");
         exit(0);
@@ -212,14 +214,15 @@ void *touchfunc(){
             sendinfo[2] = '1';
         }
         else sendinfo[2] = '0';
-        //printf("sendinfo:%c\n", sendinfo[2]);
     }
 }
 
-void *tongshin(){
+void *tongshin(){ //통신 담당 포인터함수
     while(1){
+        /*확인용 출력*/
 		//printf("%s\n",sendinfo);
-		usleep(10000);
+
+		usleep(10000); //0.01초 즉 100프레임의 레이트로 데이터를 쓴다
         write(sock, sendinfo, 5);
     }
 }
@@ -251,9 +254,10 @@ int main(int argc, char *argv[]){
     serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
     serv_addr.sin_port = htons(atoi(argv[2]));
     
-	if(connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==-1)
+	if(connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==-1) // 연결된 이후에 스레드를 나눠준다
         printf("connect() error");
         
+    /*역할별 스레드 분리*/
     chothr = pthread_create(&cho_thread, NULL, cho_umpa, 0);
     if(chothr < 0){
         perror("thread create error : ");
@@ -269,22 +273,16 @@ int main(int argc, char *argv[]){
         perror("thread create error : ");
         exit(0);
     }
-
     conthr = pthread_create(&con_thread, NULL, tongshin, 0);
     if(conthr < 0){
         perror("thread create error : ");
         exit(0);
     }
-    int end = 1;
-    pthread_join(con_thread, (void**)&status);
-        scanf("%d",&end);
-        if(end == 0){
-            pthread_cancel(cho_thread);
-            pthread_cancel(but_thread);
-            pthread_cancel(tch_thread);
-            pthread_cancel(con_thread);
-            
-        }
+    
+    pthread_join(con_thread, (void**)&status); // 만약 통신용 스레드가 멈추면 cancel을 통해 전부 멈춘다
+    pthread_cancel(cho_thread);
+    pthread_cancel(but_thread);
+    pthread_cancel(tch_thread);
     
     if (GPIOUnexport(UPBUT) == -1||GPIOUnexport(DOWNBUT) == -1||GPIOUnexport(TOUCHBUT) == -1||GPIOUnexport(CHOIN) == -1||GPIOUnexport(CHOOUT) == -1)
         return 4;
