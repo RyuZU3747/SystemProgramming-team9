@@ -30,8 +30,8 @@
 #define OUT 1
 #define LOW 0
 #define HIGH 1
-#define PIN 14
-#define VALUE_MAX 40
+#define PIN 14  //GPIO PIN num
+#define VALUE_MAX 40 
 
 int file;
 
@@ -60,17 +60,17 @@ void MPU_Init() {
     buf[1] = 7;
     write(file, buf, 2);
 
-    // Disable sleep mode (wake up)
+    //wake up
     buf[0] = PWR_MGMT_1;
     buf[1] = 1;
     write(file, buf, 2);
 
-    // Disable FSYNC and set accelerometer and gyro bandwidth to 44 and 42 Hz, respectively
+    // FSYNC를 비활성화하고 가속도계 및 자이로 대역폭을 각각 44 및 42Hz로 설정
     buf[0] = CONFIG;
     buf[1] = 0;
     write(file, buf, 2);
 
-    // Set gyro full scale range of +/-2000 degrees per second
+    // 자이로 풀 스케일 범위를 초당 +/-2000도로 설정
     buf[0] = GYRO_CONFIG;
     buf[1] = 24;
     write(file, buf, 2);
@@ -79,43 +79,9 @@ void MPU_Init() {
     buf[0] = INT_ENABLE;
     buf[1] = 1;
     write(file, buf, 2);
-    /*
-    // I2C 
-    char *i2cDevice = "/dev/i2c-1";  // I2C 장치 파일 경로 (Raspberry Pi 3 이상)
-    if ((file = open(i2cDevice, O_RDWR)) < 0) {
-        printf("Unable to open I2C device.\n");
-        exit(1);
-    }
-
-    // MPU6050으로부터 데이터 읽기 설정
-    if (ioctl(file, I2C_SLAVE, Device_Address) < 0) {
-        printf("Unable to select I2C device.\n");
-        close(file);
-        exit(1);
-    }
-
-    // Sample Rate = 8kHz/(1 + SMPLRT_DIV)
-    write(file, &(unsigned char){SMPLRT_DIV}, 1);
-    write(file, &(unsigned char){7}, 1);
-
-    // Disable sleep mode (wake up)
-    write(file, &(unsigned char){PWR_MGMT_1}, 1);
-    write(file, &(unsigned char){0}, 1);
-
-    // Disable FSYNC and set accelerometer and gyro bandwidth to 44 and 42 Hz, respectively
-    write(file, &(unsigned char){CONFIG}, 1);
-    write(file, &(unsigned char){0}, 1);
-
-    // Set gyro full scale range of +/-2000 degrees per second
-    write(file, &(unsigned char){GYRO_CONFIG}, 1);
-    write(file, &(unsigned char){24}, 1);
-
-    // Enable interrupt
-    write(file, &(unsigned char){INT_ENABLE}, 1);
-    write(file, &(unsigned char){1}, 1);*/
 }
 
-int read_raw_data(int addr) {
+int read_raw_data(int addr) { // 센서로부터 raw 값 읽기
     unsigned char high, low;
     int value;
 
@@ -128,7 +94,7 @@ int read_raw_data(int addr) {
 
     value = (high << 8) | low;
 
-    // Convert to signed value if necessary
+    // 값 유효한지 확인 및 유효화하기
     if (value > 32768) {
         value = value - 65536;
     }
@@ -136,7 +102,7 @@ int read_raw_data(int addr) {
     return value;
 }
 
-static int GPIOExport(int pin){
+static int GPIOExport(int pin){ //GPIO 설정
     #define BUFFER_MAX 3
     char buffer[BUFFER_MAX];
     ssize_t bytes_written;
@@ -154,7 +120,7 @@ static int GPIOExport(int pin){
     return(0);
 }
 
-static int GPIOUnexport(int pin){
+static int GPIOUnexport(int pin){ //GPIO 설정
     char buffer[BUFFER_MAX];
     ssize_t bytes_written;
     int fd;
@@ -191,7 +157,7 @@ static int GPIODirection(int pin, int dir){ //GPIO 설정정
     return(0);
 }
 
-static int GPIORead(int pin){ // GPIO 센서 읽기기
+static int GPIORead(int pin){ // GPIO 센서 읽기
     char path[VALUE_MAX];
     char value_str[3];
     int fd;
@@ -213,14 +179,14 @@ static int GPIORead(int pin){ // GPIO 센서 읽기기
 
 int is_touched()
 {
-    return GPIORead(PIN); // 터치 센서 값 읽기기
+    return GPIORead(PIN); // 터치 센서 값 읽기
 }
 
 int gyroZ() //필요한 센서값만 추출출
 {
     int gyro_z = read_raw_data(GYRO_ZOUT_H);
-    float Gz = gyro_z / 131.0; // 약약 -40 ~ 40
-    if(Gz < -30) // 센서값 확인 및 형식화화
+    float Gz = gyro_z / 131.0; // 약 -40 ~ 40
+    if(Gz < -30) // 센서값 확인 및 형식화
     {
         return -2;
     }
@@ -242,7 +208,7 @@ int gyroZ() //필요한 센서값만 추출출
     }
 }
 
-void gyro_all() //모든  센서값 읽기기
+void gyro_all() //모든  센서값 읽기
 {
         int acc_x = read_raw_data(ACCEL_XOUT_H);
         int acc_y = read_raw_data(ACCEL_YOUT_H);
@@ -262,7 +228,7 @@ void gyro_all() //모든  센서값 읽기기
                Gx, Gy, Gz, Ax, Ay, Az);
 }
 
-int setupGPIO() //GPIO 설정정
+int setupGPIO() //GPIO 설정
 {
     if(-1 == GPIOExport(PIN))
     {
@@ -275,7 +241,7 @@ int setupGPIO() //GPIO 설정정
     return 0;
 }
 
-void print_bar(int num, int touched) //test용 print 함수수
+void print_bar(int num, int touched) //test용 print 함수
 {
     int bar = 4, size = 5;
     if(touched)
@@ -316,13 +282,13 @@ int main(int argc, char** argv) {
     int vel = 0;
     char msg[5] = "0000"; // "Velocity to up, down, istouched, 0"
     
-    if(argc!=3){
+    if(argc!=3){ // 실행 시 IP, port 지정해줘야 함
         printf("Usage : %s <IP> <port>\n",argv[0]);
         exit(1);
     }
     
     MPU_Init();
-    sock = socket(PF_INET, SOCK_STREAM, 0);
+    sock = socket(PF_INET, SOCK_STREAM, 0); //server로의 socket 설정
     if(sock == -1)
         error_handling("socket() error");
     
@@ -331,10 +297,10 @@ int main(int argc, char** argv) {
     serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
     serv_addr.sin_port = htons(atoi(argv[2]));  
     
-    if(connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==-1)
+    if(connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==-1) //서버 연결
         error_handling("connect() error");
         
-    if(setupGPIO())
+    if(setupGPIO()) // GPIO 설정
     {
         printf("GPIO SETUP ERR\n");
         return 1;
@@ -353,7 +319,7 @@ int main(int argc, char** argv) {
             msg[0] = '0';
             msg[1] = '0' + vel;
         }
-        msg[2] = '0' + is_touched();
+        msg[2] = '0' + is_touched(); // 서버로 보낼 메시지 생성
         printf("msg : %s\n", msg);
         write(sock, msg, strlen(msg));
         //print_bar(-1 * gyroZ(), is_touched());
