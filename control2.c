@@ -44,8 +44,8 @@ void error_handling(char *message){
 void MPU_Init() {
     // I2C 
     char buf[2];
-    char *i2cDevice = "/dev/i2c-1";  // I2C 장치 파일 경로 (Raspberry Pi 3 이상)
-    if ((file = open(i2cDevice, O_RDWR)) < 0) {
+    char *i2cDevice = "/dev/i2c-1";  // I2C 장치 파일 경로
+    if ((file = open(i2cDevice, O_RDWR)) < 0) { //I2C 파일 open
         printf("Unable to open I2C device.\n");
         exit(1);
     }
@@ -170,7 +170,7 @@ static int GPIOUnexport(int pin){
     return(0);
 }
 
-static int GPIODirection(int pin, int dir){
+static int GPIODirection(int pin, int dir){ //GPIO 설정정
     static const char s_directions_str[] = "in\0out";
     #define DIRECTION_MAX 35
     char path[DIRECTION_MAX] = "/sys/class/gpio/gpio%d/direction";
@@ -191,7 +191,7 @@ static int GPIODirection(int pin, int dir){
     return(0);
 }
 
-static int GPIORead(int pin){
+static int GPIORead(int pin){ // GPIO 센서 읽기기
     char path[VALUE_MAX];
     char value_str[3];
     int fd;
@@ -213,14 +213,14 @@ static int GPIORead(int pin){
 
 int is_touched()
 {
-    return GPIORead(PIN);
+    return GPIORead(PIN); // 터치 센서 값 읽기기
 }
 
-int gyroZ()
+int gyroZ() //필요한 센서값만 추출출
 {
     int gyro_z = read_raw_data(GYRO_ZOUT_H);
-    float Gz = gyro_z / 131.0; // -40 ~ 40
-    if(Gz < -30)
+    float Gz = gyro_z / 131.0; // 약약 -40 ~ 40
+    if(Gz < -30) // 센서값 확인 및 형식화화
     {
         return -2;
     }
@@ -242,7 +242,7 @@ int gyroZ()
     }
 }
 
-void gyro_all()
+void gyro_all() //모든  센서값 읽기기
 {
         int acc_x = read_raw_data(ACCEL_XOUT_H);
         int acc_y = read_raw_data(ACCEL_YOUT_H);
@@ -262,7 +262,7 @@ void gyro_all()
                Gx, Gy, Gz, Ax, Ay, Az);
 }
 
-int setupGPIO()
+int setupGPIO() //GPIO 설정정
 {
     if(-1 == GPIOExport(PIN))
     {
@@ -275,7 +275,7 @@ int setupGPIO()
     return 0;
 }
 
-void print_bar(int num, int touched)
+void print_bar(int num, int touched) //test용 print 함수수
 {
     int bar = 4, size = 5;
     if(touched)
